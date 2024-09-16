@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Classes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<script>
+
+    async function columns() {
+        var table = document.getElementById("tableSel").value;
+        var columns = [];
+        var frm = document.getElementById('findClassForm').children;
+        for (var elem of frm) {
+            if(elem.tagName == "DIV") {
+                if (elem.children[1].checked)
+                    columns.push(elem.children[0].innerText);
+            }
+        }
+        document.getElementById("classTable").innerHTML="<thead><tr></tr></thead>";
+        var headerRow = document.getElementById("classTable").children[0].children[0];
+        for (var c of columns) {
+            headerRow.appendChild(document.createElement('th')).innerText = c;
+        }
+        headerRow.appendChild(document.createElement('th')).innerText = "Actions";
+    }
+
+    async function tables() {
+        var res = await fetch('/get-tables', {method: 'GET'});
+        var tables = (await res.json())["data"];
+        for (const t of tables) {
+            document.getElementById("tableSel").add(new Option(t, t));
+        }
+        createform();
+    }
+
+    async function data() {
+        await columns();
+        var json = {"table" : document.getElementById("tableSel").value, "data": {}};
+        var proj = [];
+        var frm = document.getElementById("findClassForm").children;
+        for (var i = 0; i < frm.length; i++) {
+            if (frm[i].tagName == "DIV") {
+                if (frm[i].children[2].value != "")
+                    json["data"][frm[i].children[0].innerText] = frm[i].children[2].value;
+                if (frm[i].children[1].checked)
+                   proj.push(frm[i].children[0].innerText);
+                }   
+        }
+        if (proj == "") {alert('Select at least one column.'); return;}
+        json["proj"] = proj.join().replace('Date', '"Date"');
+        var res = await fetch('/getresults', {method: 'POST',
+        headers: {
+                'Content-Type': 'application/json'
+            },
+        body: JSON.stringify(json)});
+        var data = (await res.json())["data"];
+        for (var i = 0; i < Object.keys(data).length; i++) {
+            var line = data[i];
+            var tr = document.getElementById("classTable").insertRow();
+            for(var j = 0; j < Object.keys(line).length; j++) {
+                var cell = tr.insertCell();
+                cell.innerText = line[j];
+            }
+            tr.insertCell().innerHTML = "<button class='deleteClass' style='margin:3px' onclick='del(this)'>Delete</button>"
+        }
+    }
+    
+    async function getRow(t) {
+        var row = t.parentElement.parentElement.children;
+        var table = document.getElementById("tableSel").value;
+        var res = await fetch('/get-columns?table=' + table, {method: 'GET'});
+        var columns = (await res.json())["data"];
+        var json = {"table": table};
+        for (var i = 0; i < Object.keys(columns).length; i++) {
+            if(columns[i] == "Date") 
+                json[columns[i]] = row[i].innerText.substring(0, 10);
+            else 
+                json[columns[i]] = row[i].innerText;
+        }
+        return JSON.stringify(json);
+    }
+
+    async function del(elem) {
+        var row = await getRow(elem);
+        var res = await fetch('/del-row', {method: 'POST',
+        headers: {
+                'Content-Type': 'application/json'
+            },
+        body: row});
+        if ((await res.json())["rowsAffected"] == "1") {
+            alert("Deleted.");
+        }
+        await data();
+    }
+
+    async function createform() {
+        var table = document.getElementById("tableSel").value;
+        var res = await fetch('/get-columns?table=' + table, {method: 'GET'});
+        var columns = (await res.json())["data"];
+        var frm = document.getElementById("findClassForm");
+        frm.innerHTML = "";
+        for (var c of Object.values(columns)) {
+            var div = document.createElement('div'); 
+            frm.appendChild(div);
+            div.innerHTML += "<label>" + c + "</label>";
+            div.innerHTML += "<input type='checkbox' checked>";
+            var inp = document.createElement('input');
+            inp.type = (c == "Date") ? "date" : "text";
+            div.appendChild(inp);
+        }
+        frm.innerHTML += "<button onclick='data()'>Find</button>";
+    }
+</script>
+<body onload="tables()">
+    <select id="tableSel" oninput="createform();"></select><br><br>
+
+    <form id="findClassForm" action="javascript:void(0);">
+        <div>
+            <label for="classDate">Date</label>
+            <input type="checkbox" id="dateCheckbox">
+            <input type="date" id="classDate">
+        </div>
+        <div>
+            <label for="classLevel">Level</label>
+            <input type="checkbox" id="levelCheckbox">
+            <select id="classLevel">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+        </div>
+        <div>
+            <label for="classCapacity">Capacity</label>
+            <input type="checkbox" id="capacityCheckbox">
+            <input type="number" id="classCapacity">
+        </div>
+	<div>
+            <label for="classCapacity">Instructor ID</label>
+            <input type="checkbox" id="capacityCheckbox">
+            <input type="number" id="instructorID">
+        </div>
+        <button id="findClassButton" onclick="data()">Find Class</button>
+        <button id="scheduleNewClass">Schedule New Class</button>
+    </form>
+
+    <br><hr><br>
+    <table id="classTable" border="1">
+        <thead>
+            <tr>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

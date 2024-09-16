@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Classes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<script>
+    async function data() {
+        var json = {
+            "patronID" : document.getElementById("patronID").value,
+            "Date" : document.getElementById("rentalDate").value,
+            "equipmentType" : document.getElementById("equipment").value
+        };
+        var res = await fetch('/new-rental', {method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)});
+        var success = await res.text();
+        if (success.includes("parent key"))
+            alert("Error: Patron does not exist.");
+        else if (success.includes("unique"))
+            alert("Error: This patron already has a rental on this date.");
+        else
+            alert("The rental was successfully created.");
+    }
+</script>
+<body>
+    <h1>Rentals</h1>
+
+    <form id="rentalForm" action="javascript:void(0);">
+        <div>
+            <label for="patron">Patron</label>
+            <input type="text" id="patronID">
+        </div>
+        <div>
+            <label for="date">Date</label>
+            <input type="date" id="rentalDate">
+        </div>
+        <div>
+            <label for="equipment">Equipment</label>
+            <input type="text" id="equipment">
+        </div>
+	    <!--- <div>
+            <label for="height">Height</label>
+            <input type="number" id="height">
+        </div>
+        <div>
+            <label for="footSize">Foot Size</label>
+            <input type="number" step="0.1" id="footSize">
+        </div> -->
+        <button id="addBtn" onclick="data()">Create Rental</button>
+    </form>
+
+</body>
+</html>

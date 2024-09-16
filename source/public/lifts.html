@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Lifts And Runs</title>
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+    <h1>Lifts and Runs</h1>
+
+    <!-- Find Runs for a Lift -->
+    <input type="text" id="liftInput" placeholder="Enter Lift Number">
+    <button onclick="findRunsForLift()">Find Runs for Lift</button>
+    <table id="runsForLiftTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Lift Number</th>
+                <th>Chair Capacity</th>
+                <th>Status</th>
+                <th>Run Number</th>
+                <th>Difficulty</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <br><hr><br>
+    <!-- Select Run Difficulty -->
+    <p>Select a run difficulty to find lifts that can access it:</p>
+    <select id="difficultySelect">
+        <option value="Green">Green</option>
+        <option value="Blue">Blue</option>
+        <option value="Black">Black</option>
+        <option value="Double Black">Double Black</option>
+    </select>
+    <button onclick="findLiftsForDifficulty()">Find Lifts</button>
+    <table id="liftsForDifficultyTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Lift Number</th>
+                <th>Chair Capacity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    
+
+    <br>
+
+    <h2>Lifts</h2>
+    
+    <form id="findLiftForm">
+        <button type="submit" id="findLiftButton">Show All Lifts</button>
+    </form>
+
+    <table id="liftTable" border="1">
+        <thead>
+            <tr>
+                <th>Lift Number</th>
+                <th>Chair Capacity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data here -->
+        </tbody>
+    </table>
+
+    <br>
+    <h2>Runs</h2>
+
+    <label for="runDifficulty">Run Difficulty:</label>
+    <select id="runDifficulty">
+        <option value="All">All</option>
+        <option value="Green">Green</option>
+        <option value="Blue">Blue</option>
+        <option value="Black">Black</option>
+        <option value="Double Black">Double Black</option>
+    </select>
+    
+    <label for="runStatus">Run Status:</label>
+    <select id="runStatus">
+        <option value="All">All</option>
+        <option value="Open">Open</option>
+        <option value="Closed">Closed</option>
+    </select>
+    
+    <button onclick="fetchFilteredRuns()">Search</button>
+    <div id="runsTable"></div>
+
+    <form id="findRunForm">
+        <button type="submit" id="findRunButton">Show All Runs</button>
+    </form>
+
+    <table id="runTable" border="1">
+        <thead>
+            <tr>
+                <th>Run Number</th>
+                <th>Difficulty</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data here -->
+        </tbody>
+    </table>
+
+
+<!-- Script -->
+    <script>
+        // Find Table (Runs and Lifts)
+        document.getElementById('findLiftButton').addEventListener('click', async () => {
+            event.preventDefault(); 
+            const response = await fetch('/get-ski-lifts');
+            const data = await response.json();
+            console.log(data.data); 
+            const liftTable = document.getElementById('liftTable').getElementsByTagName('tbody')[0];
+            liftTable.innerHTML = ''; 
+
+            data.data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+
+                liftTable.appendChild(tr);
+            });
+        });
+
+        document.getElementById('findRunButton').addEventListener('click', async () => {
+            event.preventDefault();
+            const response = await fetch('/get-ski-runs'); 
+            const data = await response.json();
+            console.log(data.data); 
+            const runTable = document.getElementById('runTable').getElementsByTagName('tbody')[0]; 
+            runTable.innerHTML = ''; 
+
+            data.data.forEach(row => {
+                const tr = document.createElement('tr');
+
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+
+                runTable.appendChild(tr);
+            });
+        });
+
+        // Join lifts and runs
+        async function findRunsForLift() {
+        const liftNumber = document.getElementById('liftInput').value;
+        console.log("Lift Number entered:", liftNumber); 
+        try {
+            const response = await fetch(`/runs-for-lift?liftNumber=${encodeURIComponent(liftNumber)}`);
+            console.log("Response status:", response.status); 
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            const data = await response.json();
+            console.log("Data received:", data); 
+            updateTable(data, 'runsForLiftTable', liftNumber);
+        } catch (error) {
+            console.error("Error fetching runs for lift:", error); 
+        }
+}
+
+        function updateTable(data, tableId) {
+            console.log("Data to populate:", data);
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            console.log("Updating table with data:", data); 
+            data.forEach(item => {
+                const row = tbody.insertRow();
+                Object.values(item).forEach(value => {
+                    const cell = row.insertCell();
+                    cell.textContent = value;
+                });
+            });
+
+            table.style.display = data.length > 0 ? 'block' : 'none';
+        }
+
+        // Division between lifts and difficulty of runs
+        async function findLiftsForDifficulty() {
+            const difficulty = document.getElementById('difficultySelect').value;
+            console.log("Selected Difficulty:", difficulty);
+            try {
+                const response = await fetch(`/find-lifts-for-difficulty?difficulty=${encodeURIComponent(difficulty)}`);
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                const lifts = await response.json();
+                console.log("Lifts that can access all runs of difficulty", difficulty, ":", lifts);
+                updateTableDivision(lifts, 'liftsForDifficultyTable'); 
+            } catch (error) {
+                console.error("Error fetching lifts:", error);
+            }
+        }
+
+        function updateTableDivision(data, tableId) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const row = tbody.insertRow();
+                ['LIFTNUMBER', 'CHAIRCAPACITY', 'LIFTSTATUS'].forEach(key => {
+                    const cell = row.insertCell();
+                    cell.textContent = item[key];
+                });
+            });
+
+            table.style.display = data.length > 0 ? 'block' : 'none';
+        }
+
+        // Selection Query 
+        function fetchFilteredRuns() {
+            const difficulty = document.getElementById('runDifficulty').value;
+            const status = document.getElementById('runStatus').value;
+            fetch(`/api/filter-runs?difficulty=${encodeURIComponent(difficulty)}&status=${encodeURIComponent(status)}`)
+            .then(response => response.json())
+            .then(data => displayRuns(data))
+            .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function displayRuns(data) {
+            const tableDiv = document.getElementById('runsTable');
+            tableDiv.innerHTML = ''; 
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Run Number</th>
+                    <th>Difficulty</th>
+                    <th>Status</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            data.forEach(run => {
+                const row = table.insertRow();
+                Object.values(run).forEach(text => {
+                    const cell = row.insertCell();
+                    cell.textContent = text;
+                });
+            });
+            tableDiv.appendChild(table);
+        }
+    </script>
+</body>
+</html>

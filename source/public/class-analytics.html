@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Classes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<script>
+    async function dataLA() {
+        var res = await fetch('/getlevelavg');
+        var data = (await res.json())["data"];
+        var tbl = document.getElementById("avgClassSizeTable");
+        tbl.innerHTML = "<thead><tr><th>Level</th><th>Average Class Size</th></tr></thead>";
+        for (var i = 0; i < Object.keys(data).length; i++) {
+            var line = data[i];
+            var row = tbl.insertRow();
+            row.insertCell().innerText = line[0]; 
+            row.insertCell().innerText = line[1]; 
+        }
+    }
+
+    async function dataIL() {
+        res = await fetch('/getinstload');
+        tbl = document.getElementById("instLoadTable");
+        data = (await res.json())["data"];
+        tbl.innerHTML = "<thead><tr><th>Instructor</th><th>Number of Classes Taught</th></tr></thead>";
+        for (var i = 0; i < Object.keys(data).length; i++) {
+            var line = data[i];
+            var row = tbl.insertRow();
+            row.insertCell().innerText = line[0]; 
+            row.insertCell().innerText = line[1]; 
+        }
+    }
+
+    async function dataLE() {
+        var startDate = document.getElementById("startDate").value;
+        if (startDate == "") {
+            alert("Pick a start date.");
+            return;
+        }
+        res = await fetch('/getLowEnrol?from=' + startDate);
+        tbl = document.getElementById("lowEnrolTable");
+        data = (await res.json())["data"];
+        tbl.innerHTML = "<thead><tr><th>Date</th><th>Enrolled</th></tr></thead>";
+        for (var i = 0; i < Object.keys(data).length; i++) {
+            var line = data[i];
+            var row = tbl.insertRow();
+            row.insertCell().innerText = line[0].substring(0,10); 
+            row.insertCell().innerText = line[1]; 
+        }
+    }
+</script>
+<body>
+    <h1>Class Analytics</h1>
+    <hr>
+    <h3>Average Class Size by Level</h3>
+    <div>
+        <button onclick="dataLA()">Load</button>
+    </div>
+    <br>
+    <table id="avgClassSizeTable" border="1">
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Average Class Size</th>
+            </tr>
+        </thead>
+    </table>
+
+    <br><hr>
+    <h3>Low Enrollment</h3>
+    Find days with low enrollment (ie. days with less then half the average enrollment across all days.)
+    <div>
+        <label>After:</label>
+        <input type="date" id="startDate">
+        <button onclick="dataLE()">Load</button>
+    </div>
+    <br>
+    <table id="lowEnrolTable" border="1">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Enrolled</th>
+            </tr>
+        </thead>
+    </table>
+
+    <br><hr>
+    <h3>Instructor Work Load</h3>
+    <div>
+        <button onclick="dataIL()">Load</button>
+    </div>
+    <br>
+    <table id="instLoadTable" border="1">
+        <thead>
+            <tr>
+                <th>Instructor</th>
+                <th>Number of Classes Taught</th>
+            </tr>
+        </thead>
+    </table>
+
+</body>
+</html>

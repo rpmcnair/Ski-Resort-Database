@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Classes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<script>
+    async function data() {
+        var json = {
+            "search" : document.getElementById("usersearch").value
+        };
+        var res = await fetch('/patron-search.html', {method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)});
+        var success = await res.json();
+        var tbl = document.getElementById('resultsTable');
+        tbl.innerHTML = "<thead><tr><th>Patron ID</th><th>Name</th><th>Email</th><th>Action</th></tr></thead>"; 
+        if (success.hasOwnProperty("error")) {
+            alert("Error: Your query is invalid and could not be executed.");
+            return;
+        }
+        var data = success["rows"];
+        console.log(data);
+        for (var i = 0; i < Object.keys(data).length; i++) {
+            var tr = tbl.insertRow();
+            tr.insertCell().innerText = data[i][0];
+            tr.insertCell().innerText = data[i][1];
+            tr.insertCell().innerText = data[i][2];
+        }    
+        addUpdateButtons();
+    }
+
+    function addUpdateButtons() {
+    const tbl = document.getElementById('resultsTable');
+    const rows = tbl.getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+        const updateBtn = document.createElement('button');
+        updateBtn.textContent = 'Update';
+        updateBtn.onclick = () => showUpdateForm(i);
+        rows[i].insertCell().appendChild(updateBtn);
+    }
+}
+
+async function showUpdateForm(rowIndex) {
+    const row = document.getElementById('resultsTable').rows[rowIndex];
+    const id = row.cells[0].innerText;
+    const name = row.cells[1].innerText;
+    const email = row.cells[2].innerText;
+
+    document.getElementById('updateId').value = id;
+    document.getElementById('updateName').value = name;
+    document.getElementById('updateEmail').value = email;
+
+    document.getElementById('updateForm').style.display = 'block';
+}
+
+async function submitUpdate() {
+    const id = document.getElementById('updateId').value;
+    const name = document.getElementById('updateName').value;
+    const email = document.getElementById('updateEmail').value;
+
+    const response = await fetch('/update-patron', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id, name, email })
+    });
+    if (response.ok) {
+        alert('Update successful!');
+        document.getElementById('updateForm').style.display = 'none';
+        data(); 
+    } else {
+        alert('Update failed!');
+    }
+}
+
+</script>
+<body>
+    <h1>Custom Search and Update</h1>
+    To use the custom search, use the syntax "Patron ID == "PXXX" || Name == "Alan" && email == "alan@gmail.com"..."
+    <form id="searchForm" action="javascript:void(0);">
+        <div>
+            <label for="patron">Criteria</label>
+            <input type="text" id="usersearch">
+        </div>
+        <button id="searchBtn" onclick="data()">Search</button>
+    </form>
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Patron ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="updateForm" style="display:none;">
+        <input type="hidden" id="updateId">
+        <input type="text" id="updateName" placeholder="New Name">
+        <input type="email" id="updateEmail" placeholder="New Email">
+        <button onclick="submitUpdate()">Save Changes</button>
+        <button onclick="hideUpdateForm()">Cancel</button>
+    </div>
+
+</body>
+</html>

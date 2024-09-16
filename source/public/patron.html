@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Patrons</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Patrons</h1>
+
+    <button id="addNewPatron">Add New Patron</button>
+    <br><br>
+
+    <form id="findPatronForm">
+        <div>
+            <label for="patronID">Patron ID</label>
+            <input type="checkbox" id="pidCheckbox">
+            <input type="number" id="patronID">
+        </div>
+        <div>
+            <label for="patronName">Name</label>
+            <input type="checkbox" id="nameCheckbox">
+            <input type="text" id="patronName">
+        </div>
+        <div>
+            <label for="patronEmail">Email</label>
+            <input type="checkbox" id="emailCheckbox">
+            <input type="email" id="patronEmail">
+        </div>
+        <button type="submit" id="findPatronButton">Find Patron</button>
+    </form>
+
+    <br><hr><br>
+    <table id="patronTable" border="1">
+        <thead>
+            <tr>
+                <th>Patron ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Alex E</td>
+                <td>a@a.com</td>
+                <td>
+                    <button class="updatePatron">Update</button>
+                    <button class="deletePatron">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
